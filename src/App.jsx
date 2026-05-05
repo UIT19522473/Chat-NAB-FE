@@ -84,6 +84,79 @@ export default function App() {
   const typingDebounceRef = useRef(null)   // debounce gửi typing:false sau 2s
   const typingTimersRef = useRef({})        // auto-hide typing sau 3s không update
 
+  // pet :))
+  const petRef = useRef(null)
+
+  const petPosRef = useRef({ x: 120, y: 160 })
+  const petVelocityRef = useRef({ vx: 0.6, vy: 0.4 })
+  const petMouseRef = useRef({ x: -9999, y: -9999 })
+
+  useEffect(() => {
+    let rafId
+
+    const animatePet = () => {
+      const pet = petRef.current
+      if (!pet) return
+
+      const pos = petPosRef.current
+      const velocity = petVelocityRef.current
+
+      const maxX = window.innerWidth - 60
+      const maxY = window.innerHeight - 80
+
+      // bay tự nhiên
+      pos.x += velocity.vx
+      pos.y += velocity.vy
+
+      // né chuột
+      const mouse = petMouseRef.current
+      const dx = pos.x - mouse.x
+      const dy = pos.y - mouse.y
+      const dist = Math.sqrt(dx * dx + dy * dy)
+
+      if (dist < 120) {
+        const force = (120 - dist) / 120
+        velocity.vx += (dx / Math.max(dist, 1)) * force * 0.25
+        velocity.vy += (dy / Math.max(dist, 1)) * force * 0.25
+      }
+
+      // chạm biên thì bật lại
+      if (pos.x <= 0 || pos.x >= maxX) velocity.vx *= -1
+      if (pos.y <= 36 || pos.y >= maxY) velocity.vy *= -1
+
+      pos.x = Math.max(0, Math.min(maxX, pos.x))
+      pos.y = Math.max(36, Math.min(maxY, pos.y))
+
+      // giới hạn tốc độ
+      velocity.vx = Math.max(-2.2, Math.min(2.2, velocity.vx))
+      velocity.vy = Math.max(-1.8, Math.min(1.8, velocity.vy))
+
+      // giảm tốc nhẹ → mượt
+      velocity.vx *= 0.995
+      velocity.vy *= 0.995
+
+      pet.style.transform = `translate3d(${pos.x}px, ${pos.y}px, 0)`
+
+      rafId = requestAnimationFrame(animatePet)
+    }
+
+    rafId = requestAnimationFrame(animatePet)
+
+    return () => cancelAnimationFrame(rafId)
+  }, [])
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      petMouseRef.current = { x: e.clientX, y: e.clientY }
+    }
+
+    window.addEventListener('mousemove', handleMouseMove)
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove)
+    }
+  }, [])
+
   // ── Fetch danh sách user ──
   useEffect(() => {
     getUsers()
@@ -549,6 +622,9 @@ const renderContent = (content = '', isMine = false) => {
             <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
           </svg>
         </button>
+      </div>
+      <div className="screen-pet" ref={petRef}>
+        💸
       </div>
     </div>
   )

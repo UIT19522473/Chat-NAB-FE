@@ -3,15 +3,15 @@
 ══════════════════════════════════════ */
 .app {
   pointer-events: all;
-  position: relative;   /* needed for toast positioning */
+  position: relative;
   width: 100vw;
   height: 100vh;
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.55);
-  backdrop-filter: blur(22px) saturate(180%);
-  -webkit-backdrop-filter: blur(22px) saturate(180%);
-  border: 1px solid rgba(255, 255, 255, 0.75);
+  background: linear-gradient(180deg, rgba(248, 250, 252, 0.72), rgba(226, 232, 240, 0.62));
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  border: 1px solid rgba(255, 255, 255, 0.65);
   overflow: hidden;
 }
 
@@ -444,191 +444,107 @@
    @Mention highlight
 ══════════════════════════════════════ */
 .mention {
-  color: #ef4444;
   font-weight: 700;
-  background: rgba(66, 133, 244, 0.1);
-  border-radius: 3px;
-  padding: 0 2px;
+  border-radius: 7px;
+  padding: 1px 6px;
 }
 
-.bubble-own .mention {
-  color: #c8d8ff;
-  background: rgba(255, 255, 255, 0.18);
+/* Chính mình được tag */
+.mention-self {
+  color: #dc2626;
+  background: rgba(254, 226, 226, 0.9);
 }
 
-/* ══════════════════════════════════════
-   Typing indicator
-══════════════════════════════════════ */
-.typing-bar {
-  min-height: 20px;
-  padding: 2px 18px;
-  background: rgba(248, 249, 250, 0.7);
-  border-top: 1px solid rgba(209, 213, 219, 0.25);
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
+/* Tag người khác */
+.mention-other {
+  color: #1e3a8a;
+  background: rgba(219, 234, 254, 0.85);
 }
 
-.typing-text {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.72rem;
-  color: rgba(60, 64, 67, 0.55);
-  font-style: italic;
+/* @all */
+.mention-all {
+  color: #dc2626;
+  background: rgba(254, 226, 226, 0.95);
+  font-weight: 800;
 }
 
-.typing-dots {
-  display: flex;
-  align-items: center;
-  gap: 2px;
+/* Mention trong bubble của mình */
+.mention-self-mine,
+.mention-all-mine {
+  color: #991b1b;
+  background: rgba(254, 226, 226, 0.95);
+  padding: 2px 7px;
+  border-radius: 7px;
+  font-weight: 800;
 }
 
-.typing-dots span {
-  display: block;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: rgba(60, 64, 67, 0.4);
-  animation: typingPulse 1.4s infinite ease-in-out;
-}
-
-.typing-dots span:nth-child(2) { animation-delay: 0.2s; }
-.typing-dots span:nth-child(3) { animation-delay: 0.4s; }
-
-@keyframes typingPulse {
-  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
-  30%            { transform: translateY(-3px); opacity: 1; }
+.mention-other-mine {
+  color: #1d4ed8;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 2px 7px;
+  border-radius: 7px;
+  font-weight: 800;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
 }
 
 /* ══════════════════════════════════════
-   Toast notifications
+   Mask message
 ══════════════════════════════════════ */
-.toast-container {
-  position: absolute;
-  top: 44px;
-  right: 12px;
-  z-index: 200;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  pointer-events: none;
-  max-width: 320px;
-}
-
-.toast {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  background: rgba(255, 255, 255, 0.88);
-  backdrop-filter: blur(14px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  border-left: 3px solid #4285f4;
-  border-radius: 8px;
-  padding: 9px 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
-  cursor: pointer;
-  pointer-events: all;
-  animation: toastIn 0.22s ease-out;
-}
-
-.toast-mention_all {
-  border-left-color: #f59e0b;
-}
-
-@keyframes toastIn {
-  from { opacity: 0; transform: translateX(16px); }
-  to   { opacity: 1; transform: translateX(0); }
-}
-
-.toast-icon {
-  font-size: 0.95rem;
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-
-.toast-text {
-  font-size: 0.78rem;
-  color: #202124;
-  line-height: 1.45;
-  word-break: break-word;
-}
-
-/* =========================
-   MASK MESSAGE
-========================= */
 .msg-content-masked {
   display: inline-block;
   filter: blur(6px);
-  opacity: 0.7;
+  opacity: 0.68;
   user-select: none;
-  transition: all 0.2s ease;
+  transition: filter 0.2s ease, opacity 0.2s ease;
 }
 
-/* Hover để đọc nhanh */
 .msg-bubble:hover .msg-content-masked {
   filter: blur(0);
   opacity: 1;
   user-select: text;
 }
 
-/* =========================
-   HEADER ACTIONS
-========================= */
+/* ══════════════════════════════════════
+   Header actions + Peek button
+══════════════════════════════════════ */
 .header-actions {
   margin-left: auto;
   display: flex;
   align-items: center;
+  gap: 8px;
 }
 
-/* =========================
-   PEEK BUTTON (UPGRADE)
-========================= */
 .peek-btn {
-  background: #f3f4f6;
-  color: #111827;
-  border: 1px solid #e5e7eb;
-  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #334155;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  padding: 6px 12px;
   border-radius: 999px;
   cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  display: flex;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
   align-items: center;
   gap: 6px;
-  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  transition: all 0.18s ease;
 }
 
-/* Hover nhẹ */
 .peek-btn:hover {
-  background: #e5e7eb;
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-1px);
 }
 
-/* Active (đang peek) */
 .peek-btn.active {
-  background: #dbeafe;
+  background: rgba(219, 234, 254, 0.95);
   color: #1d4ed8;
-  border-color: #93c5fd;
+  border-color: rgba(96, 165, 250, 0.7);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.14);
 }
 
-/* Pulse animation khi countdown */
-.peek-btn.active {
-  animation: pulse 1s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    box-shadow: 0 0 0px rgba(59, 130, 246, 0.6);
-  }
-  50% {
-    box-shadow: 0 0 12px rgba(59, 130, 246, 0.9);
-  }
-  100% {
-    box-shadow: 0 0 0px rgba(59, 130, 246, 0.6);
-  }
-}
-
-/* metion */
+/* ══════════════════════════════════════
+   Mention autocomplete
+══════════════════════════════════════ */
 .input-bar {
   position: relative;
 }
@@ -638,8 +554,9 @@
   left: 52px;
   bottom: 56px;
   width: 260px;
-  background: #ffffff;
-  border: 1px solid #e5e7eb;
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(226, 232, 240, 0.95);
   border-radius: 14px;
   box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
   padding: 6px;
@@ -679,39 +596,22 @@
 .mention-badge {
   margin-left: auto;
   font-size: 10px;
-  font-weight: 700;
+  font-weight: 800;
   color: #dc2626;
   background: #fee2e2;
   padding: 2px 6px;
   border-radius: 999px;
 }
 
-/* default */
-.mention {
-  font-weight: 600;
-}
-
-/* chính mình bị tag */
-.mention-self {
-  color: #ef4444; /* đỏ */
-}
-
-/* tag người khác */
-.mention-other {
-  color: #1e3a8a; /* xanh đậm */
-}
-
-/* @all */
-.mention-all {
-  color: #ef4444; /* đỏ */
-  font-weight: 700;
-}
-
-.mention-other-mine {
-  color: #1d4ed8;
-  background: rgba(255, 255, 255, 0.9);
-  padding: 2px 7px;
-  border-radius: 7px;
-  font-weight: 700;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+.screen-pet {
+  position: fixed;
+  top: 0;
+  left: 0;
+  font-size: 64px;
+  z-index: 999;
+  pointer-events: auto;   /* đổi từ none → auto */
+  cursor: pointer;        /* thêm dòng này */
+  user-select: none;
+  will-change: transform;
+  filter: drop-shadow(0 6px 10px rgba(15, 23, 42, 0.2));
 }
