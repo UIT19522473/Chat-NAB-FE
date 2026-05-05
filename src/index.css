@@ -1,0 +1,77 @@
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+
+  /* Nền giả Excel / Google Sheets */
+  background-color: #ffffff;
+  background-image:
+    /* Header row màu xanh nhạt Excel */
+    linear-gradient(rgba(232, 240, 254, 0.9) 28px, transparent 28px),
+    /* Đường kẻ ngang */
+    linear-gradient(rgba(209, 213, 219, 0.5) 1px, transparent 1px),
+    /* Đường kẻ dọc */
+    linear-gradient(90deg, rgba(209, 213, 219, 0.5) 1px, transparent 1px);
+  background-size:
+    100% 28px,
+    100% 28px,
+    110px 28px;
+  background-position:
+    0 0,
+    0 0,
+    46px 0;
+}
+
+/* Số cột giả (A B C D...) */
+body::before {
+  content: 'A\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0B\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0C\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0D\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0E\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0F\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0G\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0\00a0H';
+  position: fixed;
+  top: 0;
+  left: 46px;
+  right: 0;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: #5f6368;
+  letter-spacing: 65px;
+  padding-left: 32px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Số hàng giả (1 2 3 4...) */
+body::after {
+  content: '1\A 2\A 3\A 4\A 5\A 6\A 7\A 8\A 9\A 10\A 11\A 12\A 13\A 14\A 15\A 16\A 17\A 18\A 19\A 20\A 21\A 22\A 23\A 24\A 25\A 26\A 27\A 28\A 29\A 30\A 31\A 32\A 33\A 34\A 35\A 36\A 37\A 38\A 39\A 40';
+  white-space: pre;
+  position: fixed;
+  top: 28px;
+  left: 0;
+  width: 46px;
+  font-size: 11px;
+  color: #80868b;
+  text-align: center;
+  line-height: 28px;
+  pointer-events: none;
+  z-index: 0;
+  background: #f8f9fa;
+  border-right: 1px solid #d1d5db;
+}
+
+#root {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+}

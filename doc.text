@@ -1,0 +1,59 @@
+Hãy tạo cho tôi một ứng dụng web chat realtime gồm frontend ReactJS
+
+Yêu cầu tổng quan:
+- Ứng dụng chat realtime cho khoảng 6 - 8 người dùng.
+- Không sử dụng database quan hệ như MySQL/PostgreSQL.
+- Chỉ sử dụng Redis để lưu trạng thái và lịch sử chat.
+- Backend dùng Spring Boot.
+- Frontend dùng ReactJS.
+- Giao tiếp realtime bằng WebSocket/STOMP.
+- Cung cấp sẵn 6 - 8 userId mẫu để người dùng chọn khi vào web chat.
+- Người dùng chọn userId, nhập roomId, sau đó khởi tạo socket để vào room chat.
+- Mỗi room chat lưu tối đa 5000 dòng tin nhắn trong Redis.
+- Khi vượt quá 5000 tin nhắn, Redis tự xóa tin nhắn cũ nhất.
+- Khi người dùng vào room, frontend load lịch sử chat từ Redis.
+- Không cần đăng nhập thật, chỉ cần chọn userId mẫu.
+
+Frontend yêu cầu:
+- ReactJS với Vite.
+- Sử dụng SockJS + STOMP client.
+- Có giao diện đơn giản nhưng đẹp:
+  - dropdown chọn userId
+  - input nhập roomId
+  - nút Join Room
+  - khu vực hiển thị danh sách message
+  - input nhập message
+  - nút Send
+- Khi chưa join room thì không cho gửi message.
+- Khi join room:
+  - gọi API lấy lịch sử tin nhắn
+  - mở WebSocket connection
+  - subscribe room hiện tại
+- Khi rời hoặc đổi room:
+  - disconnect socket cũ
+  - clear messages
+  - connect room mới
+- Hiển thị message theo format:
+  - userId
+  - content
+  - createdAt
+- Tự scroll xuống cuối khi có message mới.
+- Cung cấp đầy đủ code:
+  - package.json
+  - main.jsx
+  - App.jsx
+  - api.js
+  - chatSocket.js
+  - CSS hoặc Tailwind nếu cần
+
+Yêu cầu output:
+- Trình bày cấu trúc thư mục backend và frontend.
+- Viết đầy đủ code từng file.
+- Giải thích ngắn cách chạy:
+  - chạy Redis bằng Docker
+  - chạy backend Spring Boot
+  - chạy frontend ReactJS
+- Cung cấp lệnh Docker để chạy Redis:
+  docker run --name redis-chat -p 6379:6379 -d redis:latest
+- Không bỏ sót file quan trọng.
+- Code phải chạy được sau khi copy vào project.
