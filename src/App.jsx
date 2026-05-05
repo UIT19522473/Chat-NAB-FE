@@ -22,15 +22,6 @@ function formatTime(createdAt) {
   return new Date(createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
 }
 
-// Highlight @mention trong nội dung tin nhắn
-function renderContent(text) {
-  return text.split(/(@\w+)/g).map((part, i) =>
-    /^@\w+$/.test(part)
-      ? <span key={i} className="mention">{part}</span>
-      : part
-  )
-}
-
 function Avatar({ uid, users, size = 32 }) {
   const color = getUserColor(uid, users)
   return (
@@ -58,6 +49,7 @@ function Toast({ text, type, onClose }) {
 }
 
 export default function App() {
+  
   const [users, setUsers] = useState([])
   const [userId, setUserId] = useState('')
   const [roomInput, setRoomInput] = useState('')
@@ -67,6 +59,21 @@ export default function App() {
   const [inputMessage, setInputMessage] = useState('')
   const [joining, setJoining] = useState(false)
   const [error, setError] = useState('')
+  //masking message
+  const [maskOff, setMaskOff] = useState(false)
+  const [countdown, setCountdown] = useState(0)
+  const maskTimerRef = useRef(null)
+  const countdownRef = useRef(null)
+  //suggest name when taging
+  const [mentionQuery, setMentionQuery] = useState('')
+  const [mentionOpen, setMentionOpen] = useState(false)
+  const [mentionIndex, setMentionIndex] = useState(0)
+  const mentionSuggestions = [
+    { id: 'all', special: true },
+    ...users.filter((u) => u.id !== userId)
+  ]
+    .filter((u) => u.id.toLowerCase().includes(mentionQuery.toLowerCase()))
+    .slice(0, 6)
 
   // { [userId]: true } — những ai đang gõ
   const [typingUsers, setTypingUsers] = useState({})
@@ -202,6 +209,19 @@ export default function App() {
   const handleInputChange = (e) => {
     const val = e.target.value
     setInputMessage(val)
+
+    const beforeCursor = val.slice(0, e.target.selectionStart)
+    const match = beforeCursor.match(/@([a-zA-Z0-9_]*)$/)
+
+    if (match) {
+      setMentionOpen(true)
+      setMentionQuery(match[1])
+      setMentionIndex(0)
+    } else {
+      setMentionOpen(false)
+      setMentionQuery('')
+    }
+
     if (!joined) return
 
     if (val === '') {
@@ -227,11 +247,114 @@ export default function App() {
   }
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSend() }
+    if (mentionOpen && mentionSuggestions.length > 0) {
+      if (e.key === 'Tab' || e.key === 'Enter') {
+        e.preventDefault()
+        applyMention(mentionSuggestions[mentionIndex].id)
+        return
+      }
+
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        setMentionIndex((prev) => (prev + 1) % mentionSuggestions.length)
+        return
+      }
+
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        setMentionIndex((prev) =>
+          prev === 0 ? mentionSuggestions.length - 1 : prev - 1
+        )
+        return
+      }
+
+      if (e.key === 'Escape') {
+        setMentionOpen(false)
+        return
+      }
+    }
+
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSend()
+    }
   }
 
   const selectedUser = users.find((u) => u.id === userId)
   const typingList = Object.keys(typingUsers)
+
+  // -- An hien tin nhan
+  const handleToggleMask = () => {
+    if (maskOff) {
+      // đang mở → tắt ngay
+      setMaskOff(false)
+      setCountdown(0)
+      clearTimeout(maskTimerRef.current)
+      clearInterval(countdownRef.current)
+      return
+    }
+
+    // đang tắt → bật 10s
+    setMaskOff(true)
+    setCountdown(10)
+
+    clearTimeout(maskTimerRef.current)
+    clearInterval(countdownRef.current)
+
+    countdownRef.current = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(countdownRef.current)
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    maskTimerRef.current = setTimeout(() => {
+      setMaskOff(false)
+    }, 10000)
+  }
+
+  useEffect(() => {
+    return () => {
+      clearTimeout(maskTimerRef.current)
+      clearInterval(countdownRef.current)
+    }
+  }, [])
+
+  //handle metion
+  const applyMention = (selectedId) => {
+  const beforeCursor = inputMessage
+  const replaced = beforeCursor.replace(/@([a-zA-Z0-9_]*)$/, `@${selectedId} `)
+
+  setInputMessage(replaced)
+  setMentionOpen(false)
+  setMentionQuery('')
+  setMentionIndex(0)
+}
+
+const renderContent = (content = '', isMine = false) => {
+  const parts = content.split(/(@\w+)/g)
+
+  return parts.map((part, idx) => {
+    if (part.startsWith('@')) {
+      const mentionId = part.slice(1)
+
+      if (mentionId.toLowerCase() === 'all') {
+        return <span key={idx} className={`mention ${isMine ? 'mention-all-mine' : 'mention-all'}`}>{part}</span>
+      }
+
+      if (mentionId === userId) {
+        return <span key={idx} className={`mention ${isMine ? 'mention-self-mine' : 'mention-self'}`}>{part}</span>
+      }
+
+      return <span key={idx} className={`mention ${isMine ? 'mention-other-mine' : 'mention-other'}`}>{part}</span>
+    }
+
+    return part
+  })
+}
 
   return (
     <div className="app">
@@ -250,6 +373,14 @@ export default function App() {
             <div className="header-title">NAB Dashboard</div>
             {joined && <div className="header-sub">Sheet: {currentRoom}</div>}
           </div>
+        </div>
+        <div className="header-actions">
+          <button
+            className={`peek-btn ${maskOff ? 'active' : ''}`}
+            onClick={handleToggleMask}
+          >
+            👁 {maskOff ? `${countdown}s` : 'Peek'}
+          </button>
         </div>
         {joined && (
           <div className="header-user">
@@ -351,7 +482,9 @@ export default function App() {
                     </div>
                   )}
                   <div className={`msg-bubble ${isOwn ? 'bubble-own' : 'bubble-other'}`}>
-                    <span className="msg-content">{renderContent(msg.content)}</span>
+                    <span className={`msg-content ${maskOff ? '' : 'msg-content-masked'}`}>
+                      {renderContent(msg.content, isOwn)}
+                    </span>
                     <span className="msg-time">{formatTime(msg.createdAt)}</span>
                   </div>
                 </div>
@@ -377,6 +510,26 @@ export default function App() {
       {/* ── Input bar ── */}
       <div className="input-bar">
         {joined && <Avatar uid={userId} users={users} size={30} />}
+        {mentionOpen && mentionSuggestions.length > 0 && (
+          <div className="mention-suggestions">
+            {mentionSuggestions.map((u, idx) => (
+              <button
+                key={u.id}
+                type="button"
+                className={`mention-option ${idx === mentionIndex ? 'active' : ''}`}
+                onMouseDown={(e) => {
+                  e.preventDefault()
+                  applyMention(u.id)
+                }}
+              >
+                <Avatar uid={u.id} users={users} size={22} />
+                <span>@{u.id}</span>
+                {u.special && <span className="mention-badge">ALL</span>}
+                {idx === mentionIndex && <kbd>Tab</kbd>}
+              </button>
+            ))}
+          </div>
+        )}
         <input
           className="input-message"
           type="text"

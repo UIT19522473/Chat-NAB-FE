@@ -444,7 +444,7 @@
    @Mention highlight
 ══════════════════════════════════════ */
 .mention {
-  color: #4285f4;
+  color: #ef4444;
   font-weight: 700;
   background: rgba(66, 133, 244, 0.1);
   border-radius: 3px;
@@ -552,4 +552,166 @@
   color: #202124;
   line-height: 1.45;
   word-break: break-word;
+}
+
+/* =========================
+   MASK MESSAGE
+========================= */
+.msg-content-masked {
+  display: inline-block;
+  filter: blur(6px);
+  opacity: 0.7;
+  user-select: none;
+  transition: all 0.2s ease;
+}
+
+/* Hover để đọc nhanh */
+.msg-bubble:hover .msg-content-masked {
+  filter: blur(0);
+  opacity: 1;
+  user-select: text;
+}
+
+/* =========================
+   HEADER ACTIONS
+========================= */
+.header-actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+}
+
+/* =========================
+   PEEK BUTTON (UPGRADE)
+========================= */
+.peek-btn {
+  background: #f3f4f6;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  padding: 8px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+/* Hover nhẹ */
+.peek-btn:hover {
+  background: #e5e7eb;
+}
+
+/* Active (đang peek) */
+.peek-btn.active {
+  background: #dbeafe;
+  color: #1d4ed8;
+  border-color: #93c5fd;
+}
+
+/* Pulse animation khi countdown */
+.peek-btn.active {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0px rgba(59, 130, 246, 0.6);
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(59, 130, 246, 0.9);
+  }
+  100% {
+    box-shadow: 0 0 0px rgba(59, 130, 246, 0.6);
+  }
+}
+
+/* metion */
+.input-bar {
+  position: relative;
+}
+
+.mention-suggestions {
+  position: absolute;
+  left: 52px;
+  bottom: 56px;
+  width: 260px;
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 14px;
+  box-shadow: 0 12px 30px rgba(15, 23, 42, 0.16);
+  padding: 6px;
+  z-index: 20;
+}
+
+.mention-option {
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 8px 10px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  color: #111827;
+  font-size: 13px;
+  text-align: left;
+}
+
+.mention-option:hover,
+.mention-option.active {
+  background: #eff6ff;
+  color: #1d4ed8;
+}
+
+.mention-option kbd {
+  margin-left: auto;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.mention-badge {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  color: #dc2626;
+  background: #fee2e2;
+  padding: 2px 6px;
+  border-radius: 999px;
+}
+
+/* default */
+.mention {
+  font-weight: 600;
+}
+
+/* chính mình bị tag */
+.mention-self {
+  color: #ef4444; /* đỏ */
+}
+
+/* tag người khác */
+.mention-other {
+  color: #1e3a8a; /* xanh đậm */
+}
+
+/* @all */
+.mention-all {
+  color: #ef4444; /* đỏ */
+  font-weight: 700;
+}
+
+.mention-other-mine {
+  color: #1d4ed8;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 2px 7px;
+  border-radius: 7px;
+  font-weight: 700;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
 }
