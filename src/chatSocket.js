@@ -1,4 +1,5 @@
 import { Client } from '@stomp/stompjs'
+import SockJS from 'sockjs-client'
 
 const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8080/ws'
 
@@ -6,7 +7,8 @@ let stompClient = null
 
 export function connect(roomId, userId, { onMessage, onTyping, onNotification }) {
   stompClient = new Client({
-    brokerURL: WS_URL,
+    //brokerURL: WS_URL,
+    webSocketFactory: () => new SockJS(WS_URL),
     connectHeaders: { userId },
     reconnectDelay: 5000,
     onConnect: () => {
