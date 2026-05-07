@@ -393,7 +393,7 @@
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
 }
 
-.msg-content { font-size: 0.855rem; }
+.msg-content { font-size: 0.92rem; font-weight: 450; letter-spacing: 0.01em; }
 
 .msg-time {
   font-size: 0.62rem;
@@ -404,6 +404,74 @@
 
 .bubble-own .msg-time   { color: rgba(255, 255, 255, 0.6); }
 .bubble-other .msg-time { color: #9aa0a6; }
+
+/* ══════════════════════════════════════
+   Typing indicator
+══════════════════════════════════════ */
+.typing-bar {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.22s ease, padding 0.22s ease;
+  background: rgba(248, 249, 250, 0.75);
+  border-top: 1px solid transparent;
+  flex-shrink: 0;
+}
+
+.typing-bar.has-typers {
+  max-height: 48px;
+  padding: 6px 14px;
+  border-top-color: rgba(209, 213, 219, 0.3);
+}
+
+.typing-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: fadeUp 0.18s ease-out;
+}
+
+.typing-avatars {
+  display: flex;
+}
+
+.typing-avatars .avatar + .avatar {
+  margin-left: -6px;
+  outline: 2px solid rgba(248, 249, 250, 0.9);
+}
+
+.typing-bubble {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  background: rgba(255, 255, 255, 0.88);
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 12px;
+  padding: 5px 9px;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.07);
+}
+
+.typing-dot {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #94a3b8;
+  animation: typingBounce 1.2s infinite ease-in-out;
+}
+
+.typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.typing-dot:nth-child(3) { animation-delay: 0.30s; }
+
+@keyframes typingBounce {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+  30%            { transform: translateY(-4px); opacity: 1; background: #475569; }
+}
+
+.typing-label {
+  font-size: 0.72rem;
+  color: rgba(71, 85, 105, 0.75);
+  font-style: italic;
+}
 
 /* ══════════════════════════════════════
    Input bar
@@ -514,6 +582,22 @@
   gap: 8px;
 }
 
+.noti-btn {
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  padding: 4px 8px;
+  border-radius: 999px;
+  cursor: pointer;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08);
+  transition: all 0.18s ease;
+}
+
+.noti-btn:hover { background: rgba(255, 255, 255, 0.95); transform: translateY(-1px); }
+.noti-btn.off { opacity: 0.5; }
+
 .peek-btn {
   background: rgba(255, 255, 255, 0.72);
   color: #334155;
@@ -609,9 +693,98 @@
   left: 0;
   font-size: 64px;
   z-index: 999;
-  pointer-events: auto;   /* đổi từ none → auto */
-  cursor: pointer;        /* thêm dòng này */
+  pointer-events: auto;
+  cursor: pointer;
   user-select: none;
   will-change: transform;
   filter: drop-shadow(0 6px 10px rgba(15, 23, 42, 0.2));
 }
+
+/* ══════════════════════════════════════
+   Toast notifications
+══════════════════════════════════════ */
+.toast-container {
+  position: absolute;
+  top: 44px;
+  right: 12px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  pointer-events: none;
+  width: 280px;
+}
+
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  border-radius: 12px;
+  padding: 10px 12px;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  pointer-events: all;
+  cursor: pointer;
+  animation: toastIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(24px) scale(0.95); }
+  to   { opacity: 1; transform: translateX(0) scale(1); }
+}
+
+.toast-mention_all { border-left: 3px solid #f59e0b; }
+.toast-mention     { border-left: 3px solid #4285f4; }
+
+.toast-type-dot {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(241, 245, 249, 0.9);
+}
+
+.toast-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.toast-sender {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toast-content {
+  font-size: 0.8rem;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.toast-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 0.7rem;
+  color: #9ca3af;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.toast-close:hover { color: #374151; background: rgba(0,0,0,0.05); }

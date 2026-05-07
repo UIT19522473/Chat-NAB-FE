@@ -23,3 +23,12 @@ export async function getHistory(roomId) {
   if (!res.ok) throw new Error(`getHistory failed: ${res.status}`)
   return res.json()
 }
+
+export async function saveFcmToken(userId, token) {
+  const res = await fetch(`${BASE_URL}/api/users/${userId}/fcm-token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token }),
+  })
+  if (!res.ok) throw new Error(`saveFcmToken failed: ${res.status}`)
+}

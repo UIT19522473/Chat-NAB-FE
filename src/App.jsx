@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { getUsers, claimUser, getHistory } from './api.js'
+import { getUsers, claimUser, getHistory, saveFcmToken } from './api.js'
 import { connect, disconnect, sendMessage, sendTyping } from './chatSocket.js'
+import { requestNotificationPermission, initForegroundNotifications } from './firebase.js'
 import './App.css'
 
 const USER_COLORS = [
@@ -34,16 +35,24 @@ function Avatar({ uid, users, size = 32 }) {
   )
 }
 
-function Toast({ text, type, onClose }) {
+function Toast({ sender, content, type, onClose }) {
   useEffect(() => {
     const t = setTimeout(onClose, 5000)
     return () => clearTimeout(t)
   }, [onClose])
 
+  const isMentionAll = type === 'mention_all'
+
   return (
     <div className={`toast toast-${type}`} onClick={onClose}>
-      <span className="toast-icon">{type === 'mention_all' ? '📢' : '🔔'}</span>
-      <span className="toast-text">{text}</span>
+      <span className="toast-type-dot">{isMentionAll ? '📢' : '@'}</span>
+      <div className="toast-body">
+        <div className="toast-sender">
+          {isMentionAll ? 'Tag tất cả' : `${sender} tag bạn`}
+        </div>
+        <div className="toast-content">{content}</div>
+      </div>
+      <button className="toast-close" onClick={(e) => { e.stopPropagation(); onClose() }}>✕</button>
     </div>
   )
 }
@@ -81,8 +90,31 @@ export default function App() {
   const [toasts, setToasts] = useState([])
 
   const messagesEndRef = useRef(null)
-  const typingDebounceRef = useRef(null)   // debounce gửi typing:false sau 2s
-  const typingTimersRef = useRef({})        // auto-hide typing sau 3s không update
+  const typingDebounceRef = useRef(null)
+  const typingTimersRef = useRef({})
+
+  // Notification toggle — dùng ref để callback STOMP luôn đọc giá trị mới nhất
+  const notiEnabledRef = useRef(localStorage.getItem('notiEnabled') !== 'false')
+  const [notiEnabled, setNotiEnabled] = useState(notiEnabledRef.current)
+
+  const toggleNoti = () => {
+    const next = !notiEnabledRef.current
+    notiEnabledRef.current = next
+    setNotiEnabled(next)
+    localStorage.setItem('notiEnabled', String(next))
+  }
+
+  const showLocalNotification = useCallback((title, body) => {
+    if (!notiEnabledRef.current) return
+    if (Notification.permission !== 'granted') return
+    if (!document.hidden) return   // tab đang mở và focus → không cần native popup
+    const n = new Notification(title, {
+      body: body.length > 120 ? body.slice(0, 117) + '...' : body,
+      icon: '/vite.svg',
+      tag: `nab-${Date.now()}`,
+    })
+    n.onclick = () => { window.focus(); n.close() }
+  }, [])
 
   // pet :))
   const petRef = useRef(null)
@@ -178,6 +210,16 @@ export default function App() {
     Object.values(typingTimersRef.current).forEach(clearTimeout)
   }, [])
 
+  // ── FCM foreground notifications ──
+  useEffect(() => {
+    // FCM chỉ dùng để show native OS notification khi tab closed/hidden
+    // STOMP đã xử lý in-app toast, không tạo toast từ FCM để tránh duplicate
+    initForegroundNotifications(({ title, body, data }) => {
+      if (data?.fromUserId && data.fromUserId === userId) return
+      showLocalNotification(title, body)
+    })
+  }, [showLocalNotification, userId])
+
   // ── Typing: nhận event từ server ──
   const handleTyping = useCallback((event) => {
     const { userId: typingUid, typing } = event
@@ -206,14 +248,21 @@ export default function App() {
 
   // ── Notification: nhận @mention ──
   const handleNotification = useCallback((notif) => {
-    if (notif.fromUserId === userId) return  // bỏ qua của chính mình
+    if (notif.fromUserId === userId) return
 
-    const text = notif.type === 'mention_all'
-      ? `${notif.fromUserId} đã tag tất cả: ${notif.content}`
-      : `${notif.fromUserId} đã tag bạn: ${notif.content}`
+    setToasts((prev) => [...prev, {
+      id: Date.now() + Math.random(),
+      sender: notif.fromUserId,
+      content: notif.content,
+      type: notif.type,
+    }])
 
-    setToasts((prev) => [...prev, { id: Date.now() + Math.random(), text, type: notif.type }])
-  }, [userId])
+    // Native OS notification khi tab không focus
+    const label = notif.type === 'mention_all'
+      ? `${notif.fromUserId} tag tất cả`
+      : `${notif.fromUserId} tag bạn`
+    showLocalNotification(label, notif.content)
+  }, [userId, showLocalNotification])
 
   const removeToast = useCallback((id) => {
     setToasts((prev) => prev.filter((t) => t.id !== id))
@@ -253,7 +302,12 @@ export default function App() {
     }
 
     connect(room, userId, {
-      onMessage: (msg) => setMessages((prev) => [...prev, msg]),
+      onMessage: (msg) => {
+        setMessages((prev) => [...prev, msg])
+        if (msg.userId !== userId) {
+          showLocalNotification(msg.userId, msg.content)
+        }
+      },
       onTyping: handleTyping,
       onNotification: handleNotification,
     })
@@ -261,6 +315,10 @@ export default function App() {
     setCurrentRoom(room)
     setJoined(true)
     setJoining(false)
+
+    requestNotificationPermission().then((token) => {
+      if (token) saveFcmToken(userId, token).catch(console.error)
+    })
   }
 
   // ── Leave room ──
@@ -434,7 +492,7 @@ const renderContent = (content = '', isMine = false) => {
       {/* ── Toast notifications ── */}
       <div className="toast-container">
         {toasts.map((t) => (
-          <Toast key={t.id} text={t.text} type={t.type} onClose={() => removeToast(t.id)} />
+          <Toast key={t.id} sender={t.sender} content={t.content} type={t.type} onClose={() => removeToast(t.id)} />
         ))}
       </div>
 
@@ -448,6 +506,13 @@ const renderContent = (content = '', isMine = false) => {
           </div>
         </div>
         <div className="header-actions">
+          <button
+            className={`noti-btn ${notiEnabled ? 'on' : 'off'}`}
+            onClick={toggleNoti}
+            title={notiEnabled ? 'Tắt thông báo' : 'Bật thông báo'}
+          >
+            {notiEnabled ? '🔔' : '🔕'}
+          </button>
           <button
             className={`peek-btn ${maskOff ? 'active' : ''}`}
             onClick={handleToggleMask}
@@ -569,14 +634,25 @@ const renderContent = (content = '', isMine = false) => {
       </div>
 
       {/* ── Typing indicator ── */}
-      <div className="typing-bar">
+      <div className={`typing-bar ${typingList.length > 0 ? 'has-typers' : ''}`}>
         {typingList.length > 0 && (
-          <span className="typing-text">
-            <span className="typing-dots">
-              <span /><span /><span />
+          <div className="typing-content">
+            <div className="typing-avatars">
+              {typingList.slice(0, 3).map((uid) => (
+                <Avatar key={uid} uid={uid} users={users} size={22} />
+              ))}
+            </div>
+            <div className="typing-bubble">
+              <span className="typing-dot" />
+              <span className="typing-dot" />
+              <span className="typing-dot" />
+            </div>
+            <span className="typing-label">
+              {typingList.length === 1
+                ? `${typingList[0]} đang nhập`
+                : `${typingList.slice(0, 2).join(', ')}${typingList.length > 2 ? ` +${typingList.length - 2}` : ''} đang nhập`}
             </span>
-            {typingList.join(', ')} đang nhập...
-          </span>
+          </div>
         )}
       </div>
 
