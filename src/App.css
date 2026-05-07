@@ -406,6 +406,25 @@
 .bubble-other .msg-time { color: #9aa0a6; }
 
 /* ══════════════════════════════════════
+   Load more history indicator
+══════════════════════════════════════ */
+.load-more-indicator {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 4px;
+}
+
+.load-more-spinner {
+  display: inline-block;
+  width: 18px;
+  height: 18px;
+  border: 2px solid rgba(66, 133, 244, 0.2);
+  border-top-color: #4285f4;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+/* ══════════════════════════════════════
    Typing indicator
 ══════════════════════════════════════ */
 .typing-bar {

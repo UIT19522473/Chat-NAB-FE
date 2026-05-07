@@ -23,6 +23,13 @@ function formatTime(createdAt) {
   return new Date(createdAt).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
 }
 
+// Parse response { messages: [], hasMore: bool } từ backend
+function parseHistory(data) {
+  const messages = Array.isArray(data?.messages) ? data.messages : []
+  const hasMore = data?.hasMore === true
+  return { messages, hasMore }
+}
+
 function Avatar({ uid, users, size = 32 }) {
   const color = getUserColor(uid, users)
   return (
@@ -90,8 +97,15 @@ export default function App() {
   const [toasts, setToasts] = useState([])
 
   const messagesEndRef = useRef(null)
+  const chatAreaRef = useRef(null)
+  const prependedRef = useRef(false)       // true khi vừa prepend history → skip auto-scroll
+  const loadingMoreRef = useRef(false)     // ref guard tránh race condition với rAF
   const typingDebounceRef = useRef(null)
   const typingTimersRef = useRef({})
+
+  const [historyPage, setHistoryPage] = useState(0)
+  const [hasMoreHistory, setHasMoreHistory] = useState(false)
+  const [loadingMore, setLoadingMore] = useState(false)
 
   // Notification toggle — dùng ref để callback STOMP luôn đọc giá trị mới nhất
   const notiEnabledRef = useRef(localStorage.getItem('notiEnabled') !== 'false')
@@ -201,6 +215,7 @@ export default function App() {
   }, [])
 
   useEffect(() => {
+    if (prependedRef.current) { prependedRef.current = false; return }
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
@@ -268,6 +283,62 @@ export default function App() {
     setToasts((prev) => prev.filter((t) => t.id !== id))
   }, [])
 
+  // ── Load more history (scroll lên trên) ──
+  // ref luôn trỏ đến giá trị mới nhất, dùng trong scroll listener (chỉ gắn 1 lần)
+  const hasMoreHistoryRef = useRef(hasMoreHistory)
+  const currentRoomRef = useRef(currentRoom)
+  const historyPageRef = useRef(historyPage)
+  useEffect(() => { hasMoreHistoryRef.current = hasMoreHistory }, [hasMoreHistory])
+  useEffect(() => { currentRoomRef.current = currentRoom }, [currentRoom])
+  useEffect(() => { historyPageRef.current = historyPage }, [historyPage])
+
+  const loadMore = useCallback(async () => {
+    if (loadingMoreRef.current || !hasMoreHistoryRef.current || !currentRoomRef.current) return
+    loadingMoreRef.current = true
+    setLoadingMore(true)
+
+    try {
+      const nextPage = historyPageRef.current + 1
+      const data = await getHistory(currentRoomRef.current, nextPage, 20)
+      const { messages: older, hasMore } = parseHistory(data)
+
+      if (older.length > 0) {
+        // Capture SAU khi fetch xong — tránh bị lệch do STOMP push tin mới trong lúc chờ
+        const chatEl = chatAreaRef.current
+        const prevScrollTop    = chatEl?.scrollTop    ?? 0
+        const prevScrollHeight = chatEl?.scrollHeight ?? 0
+
+        prependedRef.current = true
+        setMessages((prev) => [...older, ...prev])
+        setHistoryPage(nextPage)
+        setHasMoreHistory(hasMore)
+
+        // Double rAF: frame 1 = React commit DOM, frame 2 = đọc scrollHeight mới chắc chắn
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          if (chatEl) {
+            chatEl.scrollTop = prevScrollTop + (chatEl.scrollHeight - prevScrollHeight)
+          }
+          loadingMoreRef.current = false
+          setLoadingMore(false)
+        }))
+        return
+      }
+
+      setHasMoreHistory(false)
+    } catch {}
+
+    loadingMoreRef.current = false
+    setLoadingMore(false)
+  }, [])
+
+  useEffect(() => {
+    const el = chatAreaRef.current
+    if (!el) return
+    const onScroll = () => { if (el.scrollTop < 60) loadMore() }
+    el.addEventListener('scroll', onScroll, { passive: true })
+    return () => el.removeEventListener('scroll', onScroll)
+  }, [loadMore])
+
   // ── Join room ──
   const handleJoin = async () => {
     const room = roomInput.trim()
@@ -293,10 +364,15 @@ export default function App() {
     setMessages([])
     setTypingUsers({})
     setToasts([])
+    setHistoryPage(0)
+    setHasMoreHistory(false)
+    setLoadingMore(false)
 
     try {
-      const history = await getHistory(room)
-      setMessages(Array.isArray(history) ? history : [])
+      const data = await getHistory(room, 0, 20)
+      const { messages: msgs, hasMore } = parseHistory(data)
+      setMessages(msgs)
+      setHasMoreHistory(hasMore)
     } catch {
       setMessages([])
     }
@@ -334,6 +410,9 @@ export default function App() {
     setTypingUsers({})
     setToasts([])
     setError('')
+    setHistoryPage(0)
+    setHasMoreHistory(false)
+    setLoadingMore(false)
   }
 
   // ── Input message với typing debounce ──
@@ -587,7 +666,12 @@ const renderContent = (content = '', isMine = false) => {
       </div>
 
       {/* ── Chat area ── */}
-      <div className="chat-area">
+      <div className="chat-area" ref={chatAreaRef}>
+        {loadingMore && (
+          <div className="load-more-indicator">
+            <span className="load-more-spinner" />
+          </div>
+        )}
         {!joined ? (
           <div className="empty-state">
             <div className="empty-icon">📋</div>

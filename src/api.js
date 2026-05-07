@@ -18,8 +18,8 @@ export async function claimUser(userId) {
   if (!res.ok) throw new Error(`claimUser failed: ${res.status}`)
 }
 
-export async function getHistory(roomId) {
-  const res = await fetch(`${BASE_URL}/api/rooms/${roomId}/messages`)
+export async function getHistory(roomId, page = 0, size = 20) {
+  const res = await fetch(`${BASE_URL}/api/rooms/${roomId}/messages?page=${page}&size=${size}`)
   if (!res.ok) throw new Error(`getHistory failed: ${res.status}`)
   return res.json()
 }
