@@ -14,35 +14,21 @@ const app = initializeApp(firebaseConfig)
 const messaging = getMessaging(app)
 
 export async function requestNotificationPermission() {
-  if (!('Notification' in window)) {
-    console.warn('FCM: browser does not support notifications')
-    return null
-  }
+  if (!('Notification' in window)) return null
 
   const permission = await Notification.requestPermission()
-  if (permission !== 'granted') {
-    console.warn('FCM: notification permission denied')
-    return null
-  }
+  if (permission !== 'granted') return null
 
   const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY
-  if (!vapidKey) {
-    console.warn('FCM: VITE_FIREBASE_VAPID_KEY is not set')
-    return null
-  }
+  if (!vapidKey) return null
 
   try {
-    const token = await getToken(messaging, { vapidKey })
-    console.log('FCM Token:', token)
-    return token
-  } catch (err) {
-    console.error('FCM: failed to get token:', err)
+    return await getToken(messaging, { vapidKey })
+  } catch {
     return null
   }
 }
 
-// Call once after app mounts; onToast receives { title, body, data }
-// Caller is responsible for showing native notification if needed.
 export function initForegroundNotifications(onToast) {
   onMessage(messaging, (payload) => {
     const title = payload.notification?.title ?? 'NAB Dashboard'

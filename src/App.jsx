@@ -317,7 +317,7 @@ export default function App() {
     setJoining(false)
 
     requestNotificationPermission().then((token) => {
-      if (token) saveFcmToken(userId, token).catch(console.error)
+      if (token) saveFcmToken(userId, token).catch(() => {})
     })
   }
 

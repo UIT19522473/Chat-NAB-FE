@@ -58,6 +58,7 @@ self.addEventListener('notificationclick', (event) => {
     name: 'firebase-sw-generator',
     buildStart() {
       const dest = path.resolve('./public/firebase-messaging-sw.js')
+      fs.mkdirSync(path.dirname(dest), { recursive: true })
       fs.writeFileSync(dest, swContent, 'utf-8')
     },
   }

@@ -13,28 +13,22 @@ export function connect(roomId, userId, { onMessage, onTyping, onNotification })
     reconnectDelay: 5000,
     onConnect: () => {
       stompClient.subscribe(`/topic/rooms/${roomId}`, (frame) => {
-        try { onMessage(JSON.parse(frame.body)) }
-        catch { console.error('Bad message frame:', frame.body) }
+        try { onMessage(JSON.parse(frame.body)) } catch {}
       })
 
       stompClient.subscribe(`/topic/rooms/${roomId}/typing`, (frame) => {
-        try { onTyping(JSON.parse(frame.body)) }
-        catch { console.error('Bad typing frame:', frame.body) }
+        try { onTyping(JSON.parse(frame.body)) } catch {}
       })
 
       stompClient.subscribe(`/topic/rooms/${roomId}/notifications`, (frame) => {
-        try { onNotification(JSON.parse(frame.body)) }
-        catch { console.error('Bad room notif frame:', frame.body) }
+        try { onNotification(JSON.parse(frame.body)) } catch {}
       })
 
       stompClient.subscribe(`/topic/users/${userId}/notifications`, (frame) => {
-        try { onNotification(JSON.parse(frame.body)) }
-        catch { console.error('Bad user notif frame:', frame.body) }
+        try { onNotification(JSON.parse(frame.body)) } catch {}
       })
     },
-    onStompError: (frame) => {
-      console.error('STOMP error:', frame.headers['message'])
-    },
+    onStompError: () => {},
   })
 
   stompClient.activate()
